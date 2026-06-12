@@ -1,0 +1,16 @@
+# ===== Compilados de Maven =====
+**/target/
+
+# ===== IDEs y editores =====
+.vscode/
+**/.vscode/
+.idea/
+*.iml
+
+# ===== Logs y temporales =====
+*.log
+*.tmp
+
+# ===== Sistema operativo =====
+Thumbs.db
+.DS_Store
