@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: ms-usuario
+  profiles:
+    active: dev
