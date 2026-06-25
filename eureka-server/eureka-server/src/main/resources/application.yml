@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: eureka-server
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    # El servidor Eureka NO debe registrarse a si mismo
+    register-with-eureka: false
+    # Tampoco descarga el registro (es la fuente de verdad)
+    fetch-registry: false
+  server:
+    # Tiempo entre limpiezas de servicios caidos (ms)
+    eviction-interval-timer-in-ms: 15000
