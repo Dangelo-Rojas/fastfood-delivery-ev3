@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fastfood.ms_orden.DTO.CarritoItemDTO;
+import com.fastfood.ms_orden.DTO.CatalogoResponseDTO;
+import com.fastfood.ms_orden.client.RestauranteClient;
 import com.fastfood.ms_orden.model.CarritoItem;
 import com.fastfood.ms_orden.repository.CarritoItemRepository;
 
@@ -21,6 +23,9 @@ public class CarritoItemService {
 
     @Autowired
     private CarritoItemRepository carritoItemRepository;
+
+    @Autowired
+    private RestauranteClient restauranteClient;
 
     public List<CarritoItemDTO> obtenerTodos() {
         log.info("Obteniendo todos los items");
@@ -43,8 +48,22 @@ public class CarritoItemService {
         return convertirADTO(item);
     }
 
+    /**
+     * Guarda un nuevo item validando previamente que el catalogo exista
+     * en ms-restaurante via WebClient (comunicacion REST entre microservicios).
+    */
     public CarritoItemDTO guardar(CarritoItem item) {
-        log.info("Guardando nuevo item");
+        log.info("Guardando nuevo item - validando catalogo {} en ms-restaurante", item.getIdCatalogo());
+
+        // Validar que el catalogo existe llamando a ms-restaurante
+        CatalogoResponseDTO catalogo = restauranteClient.obtenerCatalogoPorId(item.getIdCatalogo());
+
+        // Si el catalogo trae precio, lo usamos como precio unitario por defecto
+        if (item.getPrecioUnitario() == null && catalogo.getPrecio() != null) {
+            item.setPrecioUnitario(catalogo.getPrecio());
+        }
+
+        log.info("Catalogo '{}' validado - guardando item", catalogo.getNombreCatalogo());
         return convertirADTO(carritoItemRepository.save(item));
     }
 
