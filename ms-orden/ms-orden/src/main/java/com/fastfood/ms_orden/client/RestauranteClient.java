@@ -31,7 +31,7 @@ public class RestauranteClient {
      * @throws RuntimeException si el producto no existe o ms-restaurante no responde
      */
     public CatalogoResponseDTO obtenerCatalogoPorId(Integer idCatalogo) {
-        log.info("Consultando ms-restaurante - catalogo ID: {}", idCatalogo);
+        log.info("Consultando - catalogo ID: {}", idCatalogo);
 
         try {
             CatalogoResponseDTO catalogo = restauranteWebClient.get()
@@ -44,8 +44,8 @@ public class RestauranteClient {
             return catalogo;
 
         } catch (WebClientResponseException.NotFound e) {
-            log.error("Catalogo con ID {} no encontrado en ms-restaurante", idCatalogo);
-            throw new RuntimeException("Catalogo con ID " + idCatalogo + " no encontrado en ms-restaurante");
+            log.error("Catalogo con ID {} no encontrado.", idCatalogo);
+            throw new RuntimeException("Catalogo con ID " + idCatalogo + " no encontrado.");
 
         } catch (Exception e) {
             log.error("Error consultando ms-restaurante: {}", e.getMessage());

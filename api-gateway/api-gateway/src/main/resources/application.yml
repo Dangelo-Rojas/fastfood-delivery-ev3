@@ -6,69 +6,65 @@ spring:
       server:
         webmvc:
           routes:
-            # ───── ms-usuario (8081) ─────
+            # ms-usuario (8081)
             - id: ms-usuario
-              uri: http://localhost:8081
+              uri: ${MS_USUARIO_URL:http://localhost:8081}
               predicates:
                 - Path=/api/v1/usuarios/**
             - id: ms-usuario-regiones
-              uri: http://localhost:8081
+              uri: ${MS_USUARIO_URL:http://localhost:8081}
               predicates:
                 - Path=/api/v1/regiones/**
             - id: ms-usuario-comunas
-              uri: http://localhost:8081
+              uri: ${MS_USUARIO_URL:http://localhost:8081}
               predicates:
                 - Path=/api/v1/comunas/**
             - id: ms-usuario-direcciones
-              uri: http://localhost:8081
+              uri: ${MS_USUARIO_URL:http://localhost:8081}
               predicates:
                 - Path=/api/v1/direcciones/**
-
-            # ───── ms-restaurante (8082) ─────
+            # ms-restaurante (8082)
             - id: ms-restaurante
-              uri: http://localhost:8082
+              uri: ${MS_RESTAURANTE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/v1/restaurantes/**
             - id: ms-restaurante-catalogos
-              uri: http://localhost:8082
+              uri: ${MS_RESTAURANTE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/v1/catalogos/**
             - id: ms-restaurante-promociones
-              uri: http://localhost:8082
+              uri: ${MS_RESTAURANTE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/v1/promociones/**
-
-            # ───── ms-orden (8087) ─────
+            # ms-orden (8087)
             - id: ms-orden
-              uri: http://localhost:8087
+              uri: ${MS_ORDEN_URL:http://localhost:8087}
               predicates:
                 - Path=/api/v1/ordenes/**
             - id: ms-orden-carritos
-              uri: http://localhost:8087
+              uri: ${MS_ORDEN_URL:http://localhost:8087}
               predicates:
                 - Path=/api/v1/carritos/**
             - id: ms-orden-carrito-items
-              uri: http://localhost:8087
+              uri: ${MS_ORDEN_URL:http://localhost:8087}
               predicates:
                 - Path=/api/v1/carrito-items/**
             - id: ms-orden-pagos
-              uri: http://localhost:8087
+              uri: ${MS_ORDEN_URL:http://localhost:8087}
               predicates:
                 - Path=/api/v1/pagos/**
             - id: ms-orden-metodos-pago
-              uri: http://localhost:8087
+              uri: ${MS_ORDEN_URL:http://localhost:8087}
               predicates:
                 - Path=/api/v1/metodos-pago/**
-
-            # ───── ms-delivery (8089) ─────
+            # ms-delivery (8089)
             - id: ms-delivery
-              uri: http://localhost:8089
+              uri: ${MS_DELIVERY_URL:http://localhost:8089}
               predicates:
                 - Path=/api/v1/deliveries/**
             - id: ms-delivery-conductores
-              uri: http://localhost:8089
+              uri: ${MS_DELIVERY_URL:http://localhost:8089}
               predicates:
                 - Path=/api/v1/conductores/**
-
 server:
   port: 8080
