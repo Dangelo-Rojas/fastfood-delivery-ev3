@@ -12,7 +12,7 @@ Dangelo Rojas
 
 ## Descripción
 
-Proyecto académico (Duoc UC) que implementa un backend de delivery de comida rápida, dividido en microservicios independientes que se comunican via REST. Incluye gestión de usuarios, restaurantes, órdenes, pagos y delivery, con un API Gateway centralizado y service discovery via Eureka.
+Proyecto académico (Duoc UC) que implementa un backend de delivery de comida rápida, dividido en microservicios independientes que se comunican via REST. Incluye gestión de usuarios, restaurantes, órdenes, pagos y delivery, con un API Gateway centralizado y service discovery via Eureka. El sistema completo está dockerizado con `docker-compose` para levantarlo con un solo comando.
 
 ---
 
@@ -61,7 +61,7 @@ Proyecto académico (Duoc UC) que implementa un backend de delivery de comida r�
 | Framework | Spring Boot 4.0.6 |
 | Microservicios | Spring Cloud 2025.1.1 |
 | Persistencia | Spring Data JPA + Hibernate |
-| Base de datos | MySQL 8 (Laragon en local) |
+| Base de datos | MySQL 8 (Laragon en local, contenedor en Docker) |
 | API Gateway | Spring Cloud Gateway |
 | Service Discovery | Netflix Eureka |
 | Comunicación REST | WebClient (Spring WebFlux) |
@@ -69,6 +69,7 @@ Proyecto académico (Duoc UC) que implementa un backend de delivery de comida r�
 | Testing | JUnit 5 + Mockito + AssertJ |
 | Cobertura | JaCoCo 0.8.12 |
 | Build | Maven 3 |
+| Contenedores | Docker + Docker Compose |
 | Boilerplate | Lombok |
 
 ---
@@ -77,6 +78,7 @@ Proyecto académico (Duoc UC) que implementa un backend de delivery de comida r�
 
 ```
 fastfood-delivery-ev3/
+├── docker-compose.yml     Orquestacion de todos los servicios
 ├── eureka-server/         Servidor de descubrimiento (:8761)
 ├── api-gateway/           Gateway con enrutamiento (:8080)
 ├── ms-usuario/            Usuarios, direcciones, regiones, comunas (:8081)
@@ -85,7 +87,7 @@ fastfood-delivery-ev3/
 └── ms-delivery/           Conductores y delivery (:8089)
 ```
 
-Cada microservicio sigue la arquitectura por capas:
+Cada microservicio incluye su propio `Dockerfile` y sigue la arquitectura por capas:
 
 ```
 src/main/java/com/fastfood/ms_xxx/
@@ -100,7 +102,60 @@ src/main/java/com/fastfood/ms_xxx/
 
 ---
 
-## Cómo Ejecutar
+## Cómo Ejecutar con Docker (Recomendado)
+
+### Prerequisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado
+- En Windows: WSL 2 activado (Docker Desktop lo instala automáticamente)
+
+### Comandos
+
+Desde la raíz del proyecto:
+
+```bash
+# Construir las imagenes (primera vez, ~5-10 min)
+docker compose build --no-cache
+
+# Levantar todo el sistema
+docker compose up
+
+# Detener y limpiar
+docker compose down
+```
+
+Esto levanta 7 contenedores en orden:
+
+1. `mysql-db` (base de datos, imagen oficial de MySQL 8)
+2. `eureka-server` (:8761) — cuando MySQL está healthy
+3. `api-gateway` (:8080) — cuando Eureka está healthy
+4. `ms-usuario`, `ms-restaurante`, `ms-orden`, `ms-delivery` — en paralelo
+
+Tiempo total de arranque: ~90 segundos.
+
+### Verificar que todo funciona
+
+- Dashboard de Eureka: http://localhost:8761
+- API Gateway: http://localhost:8080/api/v1/usuarios
+
+En Eureka deben aparecer los 4 microservicios registrados como UP.
+
+### Configuración con variables de entorno
+
+Los `application.yml` y `application-dev.yml` usan variables de entorno con valores por defecto, lo que permite ejecutar el proyecto en dos entornos sin modificar código:
+
+- **Con Docker**: las variables `DATABASE_HOST`, `EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE`, `MS_XXX_URL` son inyectadas por `docker-compose.yml`.
+- **En local (Laragon)**: al no existir las variables, se usan los valores por defecto (`localhost`).
+
+Ejemplo:
+
+```yaml
+url: jdbc:mysql://${DATABASE_HOST:localhost}:3306/db_usuario
+```
+
+---
+
+## Cómo Ejecutar en Local (sin Docker)
 
 ### Prerequisitos
 
@@ -108,50 +163,51 @@ src/main/java/com/fastfood/ms_xxx/
 - Maven 3.8+
 - MySQL 8 (recomendado: [Laragon](https://laragon.org/))
 - Crear las 4 bases de datos:
+
 ```sql
-  CREATE DATABASE db_usuario;
-  CREATE DATABASE db_restaurante;
-  CREATE DATABASE db_orden;
-  CREATE DATABASE db_delivery;
+CREATE DATABASE db_usuario;
+CREATE DATABASE db_restaurante;
+CREATE DATABASE db_orden;
+CREATE DATABASE db_delivery;
 ```
 
 ### Orden de arranque (6 terminales)
 
 1. Eureka Server
 ```powershell
-   cd eureka-server/eureka-server
-   ./mvnw spring-boot:run
+cd eureka-server/eureka-server
+./mvnw spring-boot:run
 ```
-   Dashboard: http://localhost:8761
+Dashboard: http://localhost:8761
 
 2. ms-usuario
 ```powershell
-   cd ms-usuario/ms-usuario
-   ./mvnw spring-boot:run
+cd ms-usuario/ms-usuario
+./mvnw spring-boot:run
 ```
 
 3. ms-restaurante
 ```powershell
-   cd ms-restaurante/ms-restaurante
-   ./mvnw spring-boot:run
+cd ms-restaurante/ms-restaurante
+./mvnw spring-boot:run
 ```
 
 4. ms-orden
 ```powershell
-   cd ms-orden/ms-orden
-   ./mvnw spring-boot:run
+cd ms-orden/ms-orden
+./mvnw spring-boot:run
 ```
 
 5. ms-delivery
 ```powershell
-   cd ms-delivery/ms-delivery
-   ./mvnw spring-boot:run
+cd ms-delivery/ms-delivery
+./mvnw spring-boot:run
 ```
 
 6. API Gateway
 ```powershell
-   cd api-gateway/api-gateway
-   ./mvnw spring-boot:run
+cd api-gateway/api-gateway
+./mvnw spring-boot:run
 ```
 
 ---
@@ -171,9 +227,9 @@ Todos accesibles via API Gateway en `http://localhost:8080`.
 | Órdenes | GET | `/api/v1/ordenes` | Listar órdenes |
 | Carrito | POST | `/api/v1/carrito-items` | Agregar item (valida catálogo en ms-restaurante) |
 | Pagos | POST | `/api/v1/pagos` | Procesar pago |
-| Delivery | GET | `/api/v1/delivery` | Estado de delivery |
+| Delivery | GET | `/api/v1/deliveries` | Estado de delivery |
 
-### Documentación Swagger
+### Documentación Swagger (solo en modo local)
 
 Cada microservicio expone su propio Swagger UI:
 
@@ -181,6 +237,8 @@ Cada microservicio expone su propio Swagger UI:
 - ms-restaurante: http://localhost:8082/swagger-ui.html
 - ms-orden: http://localhost:8087/swagger-ui.html
 - ms-delivery: http://localhost:8089/swagger-ui.html
+
+En modo Docker, los microservicios no exponen puertos directamente (solo Gateway y Eureka). Todo el tráfico pasa por el Gateway.
 
 ---
 
@@ -227,11 +285,11 @@ CarritoItemService.guardar()
 RestauranteClient.obtenerCatalogoPorId(idCatalogo)
     |
     v
-GET http://localhost:8082/api/v1/catalogos/{id}   <-- ms-restaurante
+GET http://ms-restaurante:8082/api/v1/catalogos/{id}   <-- via WebClient
     |
     v
 Si existe: guarda el item con el precio del catálogo
-Si no existe: lanza excepción 404
+Si no existe: lanza excepción "Catalogo con ID X no encontrado."
 ```
 
 ---
@@ -260,15 +318,14 @@ Estructura del tablero:
 - [x] Validaciones con Bean Validation
 - [x] API Gateway con 14 rutas configuradas
 - [x] Documentación Swagger en los 4 microservicios
-- [x] Configuración YAML completa
+- [x] Configuración YAML con perfiles (dev, test, prod)
 - [x] Tests unitarios con 80%+ cobertura en los 4 servicios
 - [x] Service discovery con Eureka
 - [x] Comunicación REST entre ms-orden y ms-restaurante (WebClient)
 - [x] Reportes de cobertura con JaCoCo
-- [x] Verificación completa del registro de los 4 microservicios en Eureka
-- [x] API Gateway como cliente de Eureka 
-- [x] Despliegue en Railway
-- [x] HATEOAS en controllers
+- [x] Registro de los 4 microservicios en Eureka
+- [x] Dockerización completa: 6 Dockerfiles + docker-compose.yml
+- [x] Variables de entorno para portabilidad local/Docker
 
 ---
 
@@ -276,8 +333,9 @@ Estructura del tablero:
 
 - La estructura tiene anidamiento doble (`ms-usuario/ms-usuario/`) debido a la inicialización del proyecto.
 - El servicio `ms-orden` usa puerto 8087 (no 8083) por convención del proyecto.
-- En desarrollo se usa el perfil `dev` con MySQL local. Configuración en `application-dev.yml`.
-- Los tests usan H2 en memoria para no depender de la base de datos real.
+- En desarrollo local se usa el perfil `dev` con MySQL de Laragon.
+- En Docker se usa el mismo perfil `dev` pero la BD está en un contenedor.
+- Los tests unitarios mockean el repository y clientes REST con Mockito.
 
 ---
 
